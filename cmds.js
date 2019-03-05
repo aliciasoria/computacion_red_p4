@@ -1,8 +1,9 @@
 
 
 const {log, biglog, errorlog, colorize} = require("./out");
-
-const model = require('./model');
+//accedo directamente a la propiedad de sequelize
+//en vez de llamar sequelize.models.quiz pondre models.quiz
+const {models} = require('./model');
 
 
 /**
@@ -32,13 +33,26 @@ exports.helpCmd = rl => {
  * @param rl Objeto readline usado para implementar el CLI.
  */
 exports.listCmd = rl => {
-    model.getAll().forEach((quiz, id) => {
-        log(` [${colorize(id, 'magenta')}]:  ${quiz.question}`);
-    });
-    rl.prompt();
+  models.quiz.findAll()
+  .each(quiz => {log(`Falta el parámetro id.`);})
+  .catch(error => {errorlog(error.message);})
+  .then(()=>{rl.prompt();})
 };
 
-
+const validateId=id=>{
+  return new Promise((resolve,reject) => {
+    if (typeof id === "undefined"){
+      reject(new Error(`Falta el parametro ${id}.`));
+    }else{
+      id=parseInt(id);
+      if(Number.isNaN(id)){
+    reject(new Error(`El valor del parametro id no es un numero`));
+  }else{
+    resolve(id);
+  }
+    }
+  });
+};
 /**
  * Muestra el quiz indicado en el parámetro: la pregunta y la respuesta.
  *
@@ -46,17 +60,14 @@ exports.listCmd = rl => {
  * @param id Clave del quiz a mostrar.
  */
 exports.showCmd = (rl, id) => {
-    if (typeof id === "undefined") {
-        errorlog(`Falta el parámetro id.`);
-    } else {
-        try {
-            const quiz = model.getByIndex(id);
-            log(` [${colorize(id, 'magenta')}]:  ${quiz.question} ${colorize('=>', 'magenta')} ${quiz.answer}`);
-        } catch(error) {
-            errorlog(error.message);
-        }
-    }
-    rl.prompt();
+  validateId(id)//es una promesa que devuelve un INTEGER
+  .then(id => models.quiz.findById(id))//me devuelve el quiz que busco
+  .then(quiz=>{
+    if(!quiz){throw new Error(`No hay quiz ${id}`);}
+    log(` [${colorize(id, 'magenta')}]:  ${quiz.question} ${colorize('=>', 'magenta')} ${quiz.answer}`);
+  })
+  .catch(error => {errorlog(error.message);})
+  .then(()=>rl.prompt(););
 };
 
 
@@ -189,4 +200,3 @@ exports.creditsCmd = rl => {
 exports.quitCmd = rl => {
     rl.close();
 };
-
