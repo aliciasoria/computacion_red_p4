@@ -4,6 +4,7 @@ const {log, biglog, errorlog, colorize} = require("./out");
 //accedo directamente a la propiedad de sequelize
 //en vez de llamar sequelize.models.quiz pondre models.quiz
 const {models} = require('./model');
+const Sequelize = require('sequelize');
 
 
 /**
@@ -50,7 +51,7 @@ quizzes.forEach(quiz=>{log(`falta id`);});
 */
 
 const validateId=id=>{
-  return new Promise((resolve,reject) => {
+  return new SequelizePromise((resolve,reject) => {
     if (typeof id === "undefined"){
       reject(new Error(`Falta el parametro ${id}.`));
     }else{
@@ -83,7 +84,7 @@ exports.showCmd = (rl, id) => {
 
 //auxiliar para hacer rl.question
 const makeQuestion=(rl,text)=>{
-  return new Promise((resolve,reject)=>{
+  return new SequelizePromise((resolve,reject)=>{
     rl.question(colorize(text,'red'),myanswer=>{
       resolve(myanswer.trim().toLowerCase());
     });
@@ -127,7 +128,26 @@ makeQuestion(rl,'Introduzca una pregunta')
   rl.prompt();
 });
 };
+/*
+//intenta esto luego
+exports.addCmd = sync(rl) => {
+try{
+const q = await makeQuestion(rl,"Introduzca pregunta");
+const a = await makeQuestion(rl,"introduzca respuesta");
+await models.quiz.create({question:q, answer:a});
+log(`${colorize('se ha añadido','magenta')}`:
+${quiz.question} ${colorize('=>','magenta')}
+${quiz.answer});
+});
 
+}catch(Sequelize.ValidationError,error=>{
+  errorlog('el quiz es erroneo:');
+  error.errors.forEach(({message})=>errorlog(message));
+})
+
+};
+
+*/
 
 /**
  * Borra un quiz del modelo.
@@ -136,18 +156,11 @@ makeQuestion(rl,'Introduzca una pregunta')
  * @param id Clave del quiz a borrar en el modelo.
  */
 exports.deleteCmd = (rl, id) => {
-    if (typeof id === "undefined") {
-        errorlog(`Falta el parámetro id.`);
-    } else {
-        try {
-            model.deleteByIndex(id);
-        } catch(error) {
-            errorlog(error.message);
-        }
-    }
-    rl.prompt();
-};
-
+    validateId(id);
+    .then(id=>models.quiz.destroy({where:{id}}))
+    .catch(error=>{errorlog(error.message);})
+    .then(()=>{rl.prompt();});
+  };
 
 /**
  * Edita un quiz del modelo.
@@ -161,34 +174,43 @@ exports.deleteCmd = (rl, id) => {
  * @param id Clave del quiz a editar en el modelo.
  */
 exports.editCmd = (rl, id) => {
-    if (typeof id === "undefined") {
-        errorlog(`Falta el parámetro id.`);
+    validateId(id)
+    .then(id=>models.quiz.findById(id))
+    .then(quiz=>{
+      if(!quiz){
+        throw new Error(`No existe un quiz asociado al id = ${id}.`);
+      }
+     process.stdout.isTTY && setTimeout(() => {rl.write(quiz.question)},0);
+     return makeQuestion(rl,"Introduzca la pregunta: ")
+     .then(q=>{
+          process.stdout.isTTY && setTimeout(() => {rl.write(quiz.answer)},0);
+          return makeQuestion(rl,"Introduzca la respuesta: ")
+          .then(a=>{
+            quiz.question=q;
+            quiz.answer=a;
+            return quiz;
+          });
+        });
+      })
+      .then(quiz=>{
+        return quiz.save();
+      })
+      .then(quiz=>{
+        log(`Se ha cambiado el quiz ${colorize(quiz.id,'magetna')} por: ${quiz.question} ${colorize('=>','magenta')} ${quiz.answer}`);
+      })
+      .catch(Sequelize.ValidationError,error=>{
+        errorlog('El quiz es erroneo');
+        error.errors.forEach(({message})=>errorlog(message));
+      })
+      .catch(error=>{
+        errorlog(error.message);
+      })
+      .then(()=>{
         rl.prompt();
-    } else {
-        try {
-            const quiz = model.getByIndex(id);
+      });
+    };
 
-            process.stdout.isTTY && setTimeout(() => {rl.write(quiz.question)},0);
-
-            rl.question(colorize(' Introduzca una pregunta: ', 'red'), question => {
-
-                process.stdout.isTTY && setTimeout(() => {rl.write(quiz.answer)},0);
-
-                rl.question(colorize(' Introduzca la respuesta ', 'red'), answer => {
-                    model.update(id, question, answer);
-                    log(` Se ha cambiado el quiz ${colorize(id, 'magenta')} por: ${question} ${colorize('=>', 'magenta')} ${answer}`);
-                    rl.prompt();
-                });
-            });
-        } catch (error) {
-            errorlog(error.message);
-            rl.prompt();
-        }
-    }
-};
-
-
-/**
+  /**
  * Prueba un quiz, es decir, hace una pregunta del modelo a la que debemos contestar.
  *
  * @param rl Objeto readline usado para implementar el CLI.
