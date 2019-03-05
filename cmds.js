@@ -78,7 +78,7 @@ exports.showCmd = (rl, id) => {
     log(` [${colorize(id, 'magenta')}]:  ${quiz.question} ${colorize('=>', 'magenta')} ${quiz.answer}`);
   })
   .catch(error => {errorlog(error.message);})
-  .then(()=>rl.prompt(););
+  .then(()=>{rl.prompt();});
 };
 
 
@@ -113,9 +113,7 @@ makeQuestion(rl,'Introduzca una pregunta')
   return models.quiz.create(quiz);
 })
 .then(quiz=>{
-  log(`${colorize('se ha añadido','magenta')}`:
-  ${quiz.question} ${colorize('=>','magenta')}
-  ${quiz.answer});
+  log(`${colorize('se ha añadido','magenta')} : ${quiz.question} ${colorize('=>','magenta')} ${quiz.answer}  `);
 })
 .catch(Sequelize.ValidationError,error=>{
   errorlog('el quiz es erroneo:');
@@ -156,8 +154,8 @@ ${quiz.answer});
  * @param id Clave del quiz a borrar en el modelo.
  */
 exports.deleteCmd = (rl, id) => {
-    validateId(id);
-    .then(id=>models.quiz.destroy({where:{id}}))
+    validateId(id)
+    .then(id=>{  models.quiz.destroy({where:{id}}) })
     .catch(error=>{errorlog(error.message);})
     .then(()=>{rl.prompt();});
   };
@@ -217,8 +215,21 @@ exports.editCmd = (rl, id) => {
  * @param id Clave del quiz a probar.
  */
 exports.testCmd = (rl, id) => {
-    log('Probar el quiz indicado.', 'red');
-    rl.prompt();
+  validateId(id)
+  .then(id=>models.quiz.findById(id))
+  .then(
+    quiz=>{
+    if(!quiz){throw new Error(`No existe un quiz asociado al id = ${id}.`);}
+    return makeQuestion(rl,quiz)
+     .then(a=>{
+      if(a===quiz.answer.toLowerCase().trim()){
+      biglog('Correcto','bgGreen');
+    } else {biglog('Incorrecto','bgRed');}
+  })
+  .catch(error=>{errorlog(error.message);})
+  .then(()=>{rl.prompt();});
+
+});
 };
 
 
@@ -229,8 +240,42 @@ exports.testCmd = (rl, id) => {
  * @param rl Objeto readline usado para implementar el CLI.
  */
 exports.playCmd = rl => {
-    log('Jugar.', 'red');
+  let score =0;
+  const resolved=[];
+
+  let playnext=()=>{
+    const whereOpt={'id':{[Sequelize.Op.notIn]:resolved}};
+    return models.quiz.count({where:whereOpt})
+    .then(function(count){
+      return models.quiz.findOne({where:whereOpt});
+      })
+      .then(quiz=>{
+        if(!quiz){
+          log('No hay nada que preguntar');
+          return;
+        }
+        resolved.push(quiz.id);
+        return makeQuestion(rl, `${quiz.question}?`)
+        .then(answer=>{
+          if(answer.toLowerCase().trim()===quiz.answer.toLowerCase().trim()){
+            score++;
+            log(`CORRECTO - Lleva ${score} aciertos.`);
+            return playnext();
+          }else{log("INCORRECTO.");}
+        });
+      });
+    };
+
+    playnext()
+    .then(()=>{
+      log("Fin del juego. Aciertos:");
+      biglog(score,'magenta');
+    })
+    .catch(error=>{errorlog(error.message)
+    })
+  .then(()=>{
     rl.prompt();
+  });
 };
 
 
@@ -241,8 +286,7 @@ exports.playCmd = rl => {
  */
 exports.creditsCmd = rl => {
     log('Autores de la práctica:');
-    log('Nombre 1', 'green');
-    log('Nombre 2', 'green');
+    log('Alicia Soria', 'green');
     rl.prompt();
 };
 

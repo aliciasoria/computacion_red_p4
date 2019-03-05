@@ -1,4 +1,4 @@
-const readline = require('readline');
+ const readline = require('readline');
 
 const {log, biglog, errorlog, colorize} = require("./out");
 
@@ -88,5 +88,3 @@ rl
     log('Adios!');
     process.exit(0);
 });
-
-
