@@ -38,6 +38,16 @@ exports.listCmd = rl => {
   .catch(error => {errorlog(error.message);})
   .then(()=>{rl.prompt();})
 };
+/*
+//intenta esto luego
+exports.listCmd = sync(rl) => {
+try{
+const quizzes = await models.quiz.findAll();
+quizzes.forEach(quiz=>{log(`falta id`);});
+}catch(error=>{errorlog(error.message);});
+  rl.prompt();
+};
+*/
 
 const validateId=id=>{
   return new Promise((resolve,reject) => {
@@ -71,6 +81,14 @@ exports.showCmd = (rl, id) => {
 };
 
 
+//auxiliar para hacer rl.question
+const makeQuestion=(rl,text)=>{
+  return new Promise((resolve,reject)=>{
+    rl.question(colorize(text,'red'),myanswer=>{
+      resolve(myanswer.trim().toLowerCase());
+    });
+  });
+};
 /**
  * Añade un nuevo quiz al módelo.
  * Pregunta interactivamente por la pregunta y por la respuesta.
@@ -83,16 +101,31 @@ exports.showCmd = (rl, id) => {
  * @param rl Objeto readline usado para implementar el CLI.
  */
 exports.addCmd = rl => {
-
-    rl.question(colorize(' Introduzca una pregunta: ', 'red'), question => {
-
-        rl.question(colorize(' Introduzca la respuesta ', 'red'), answer => {
-
-            model.add(question, answer);
-            log(` ${colorize('Se ha añadido', 'magenta')}: ${question} ${colorize('=>', 'magenta')} ${answer}`);
-            rl.prompt();
-        });
-    });
+makeQuestion(rl,'Introduzca una pregunta')
+.then(q=>{
+  return makeQuestion(rl,'Introduzca respuesta')
+  .then(a=>{
+    return{question:q,answer:a};
+  });
+})
+.then(quiz=>{
+  return models.quiz.create(quiz);
+})
+.then(quiz=>{
+  log(`${colorize('se ha añadido','magenta')}`:
+  ${quiz.question} ${colorize('=>','magenta')}
+  ${quiz.answer});
+})
+.catch(Sequelize.ValidationError,error=>{
+  errorlog('el quiz es erroneo:');
+  error.errors.forEach(({message})=>errorlog(message));
+})
+.catch(error=>{
+  errorlog(error.message);
+})
+.then(()=>{
+  rl.prompt();
+});
 };
 
 
