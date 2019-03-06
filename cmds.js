@@ -258,6 +258,7 @@ exports.testCmd = async(rl, id) => {
   try{
     const vprom = await validateId(id);
     const quiz = await models.quiz.findById(id);
+    if(!quiz){throw new Error(`No hay ningun quiz con id = ${id}.`);}
     const myanswer = await makeQuestion(rl,`${quiz.question}? `);
     const myanswerok = await myanswer.trim().toLowerCase();
     const theanswerok = await quiz.answer.trim().toLowerCase();
@@ -275,11 +276,7 @@ exports.testCmd = async(rl, id) => {
  *
  * @param rl Objeto readline usado para implementar el CLI.
  */
-exports.playCmd = rl => {
-    log('Jugar.', 'red');
-    rl.prompt();
-};
-
+  if(!quiz){throw new Error(`No hay ningun quiz con id = ${id}.`);}
 
 
 /**
