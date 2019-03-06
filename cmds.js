@@ -172,6 +172,7 @@ exports.deleteCmd = (rl, id) => {
  * @param rl Objeto readline usado para implementar el CLI.
  * @param id Clave del quiz a editar en el modelo.
  */
+/*
 exports.editCmd = (rl, id) => {
     validateId(id)
     .then(id=>models.quiz.findById(id))
@@ -208,7 +209,24 @@ exports.editCmd = (rl, id) => {
         rl.prompt();
       });
     };
-
+*/
+//este mio parece que funciona
+exports.editCmd = async(rl, id) => {
+  try{
+    const vprom = await validateId(id);
+    const quiz = await models.quiz.findById(id);
+      if(!quiz){throw new Error(`No hay ningun quiz con id = ${id}.`);}
+    process.stdout.isTTY && setTimeout(() => {rl.write(quiz.question)},0);
+    const qprom = await makeQuestion(rl,'Introduzca una pregunta: ');
+    process.stdout.isTTY && setTimeout(() => {rl.write(quiz.answer)},0);
+   const ansprom = await makeQuestion(rl,'Introduzca una respuesta: ');
+   quiz.question = await qprom;
+   quiz.answer = await ansprom;
+   const sa = quiz.save();
+   log(`${colorize('se ha actualizado con','magenta')} : ${quiz.question} ${colorize('=>','magenta')} ${quiz.answer}  `);
+ }catch(error){errorlog(error.message);}
+   rl.prompt();
+};
   /**
  * Prueba un quiz, es decir, hace una pregunta del modelo a la que debemos contestar.
  *
