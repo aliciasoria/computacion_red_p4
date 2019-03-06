@@ -233,24 +233,41 @@ exports.editCmd = async(rl, id) => {
  * @param rl Objeto readline usado para implementar el CLI.
  * @param id Clave del quiz a probar.
  */
-exports.testCmd = (rl, id) => {
+//test cmd con .then
+exports.testCmd=(rl,id)=>{
   validateId(id)
-  .then(id=>models.quiz.findById(id))
-  .then(
-    quiz=>{
-    if(!quiz){throw new Error(`No existe un quiz asociado al id = ${id}.`);}
-    return makeQuestion(rl,quiz)
-     .then(a=>{
-      if(a===quiz.answer.toLowerCase().trim()){
-      biglog('Correcto','bgGreen');
-    } else {biglog('Incorrecto','bgRed');}
+  .then((id)=>{
+    return models.quiz.findById(id)
+      .then((quiz)=> {
+        return makeQuestion(rl,`${quiz.question}? `)
+          .then((answ)=>{
+                if(answ.trim().toLowerCase()===quiz.answer.trim().toLowerCase()){
+                    biglog('Correcto','bgGreen');
+                    }else{biglog('Incorrecto','bgRed');}
   })
+})
+})
   .catch(error=>{errorlog(error.message);})
   .then(()=>{rl.prompt();});
 
-});
 };
 
+ /*
+ //este funciona bien con async
+exports.testCmd = async(rl, id) => {
+  try{
+    const vprom = await validateId(id);
+    const quiz = await models.quiz.findById(id);
+    const myanswer = await makeQuestion(rl,`${quiz.question}? `);
+    const myanswerok = await myanswer.trim().toLowerCase();
+    const theanswerok = await quiz.answer.trim().toLowerCase();
+
+    if(myanswerok===theanswerok){biglog('Correcto','bgGreen');rl.prompt();}
+    else {biglog('Incorrecto','bgRed');rl.prompt();}
+      }catch(error) {errorlog(error.message);
+  rl.prompt();}
+};
+*/
 
 /**
  * Pregunta todos los quizzes existentes en el modelo en orden aleatorio.
@@ -259,43 +276,10 @@ exports.testCmd = (rl, id) => {
  * @param rl Objeto readline usado para implementar el CLI.
  */
 exports.playCmd = rl => {
-  let score =0;
-  const resolved=[];
-
-  let playnext=()=>{
-    const whereOpt={'id':{[Sequelize.Op.notIn]:resolved}};
-    return models.quiz.count({where:whereOpt})
-    .then(function(count){
-      return models.quiz.findOne({where:whereOpt});
-      })
-      .then(quiz=>{
-        if(!quiz){
-          log('No hay nada que preguntar');
-          return;
-        }
-        resolved.push(quiz.id);
-        return makeQuestion(rl, `${quiz.question}?`)
-        .then(answer=>{
-          if(answer.toLowerCase().trim()===quiz.answer.toLowerCase().trim()){
-            score++;
-            log(`CORRECTO - Lleva ${score} aciertos.`);
-            return playnext();
-          }else{log("INCORRECTO.");}
-        });
-      });
-    };
-
-    playnext()
-    .then(()=>{
-      log("Fin del juego. Aciertos:");
-      biglog(score,'magenta');
-    })
-    .catch(error=>{errorlog(error.message)
-    })
-  .then(()=>{
+    log('Jugar.', 'red');
     rl.prompt();
-  });
 };
+
 
 
 /**
