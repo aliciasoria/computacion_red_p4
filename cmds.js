@@ -276,7 +276,47 @@ exports.testCmd = async(rl, id) => {
  *
  * @param rl Objeto readline usado para implementar el CLI.
  */
-  if(!quiz){throw new Error(`No hay ningun quiz con id = ${id}.`);}
+  exports.playCmd = async(rl) => {
+  try{
+    let score =0;
+    let idsNotYetResolved=[];
+    const todos = await models.quiz.findAll();
+    let m =0;
+    todos.forEach(qui=>{idsNotYetResolved[m]=qui.id;m++;});
+
+    const playBien=async()=>{
+      if(idsNotYetResolved.length===0){
+        log(`No hay nada más que preguntar.\n`)
+        log(`Fin del juego, aciertos: ${score} `)
+        biglog(`${score}`);
+        rl.prompt();
+      }
+      else{
+        let posi=Math.round( Math.random()*(idsNotYetResolved.length-1) );
+        let idalazar = idsNotYetResolved[ posi ];
+        idsNotYetResolved.splice(posi,1);
+        const quiz = await models.quiz.findById(idalazar);
+        const ansprom = await makeQuestion(rl,`${quiz.question}? `);
+            if(ansprom.trim().toLowerCase()===quiz.answer.trim().toLowerCase()){
+                score=score+1;
+                log(`CORRECTO correct - Lleva ${score} aciertos: ${score} `,'bgGreen');
+                playBien();
+            }else{
+              log(`INCORRECTO. \n`)
+              log(`Fin del juego, aciertos: ${score}, a tu casa`,'bgRed');
+              biglog(`${score}`);
+              rl.prompt();
+            }
+      }
+    };
+    playBien();
+  }catch(error){
+    errorlog(error.message);
+    rl.prompt();
+  }
+};
+
+
 
 
 /**
