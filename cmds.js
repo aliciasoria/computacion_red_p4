@@ -102,10 +102,10 @@ rl.prompt();
 
 
 //auxiliar para hacer rl.question
-const makeQuestion=(rl,text)=>{
-  return new SequelizePromise((resolve,reject)=>{
+const makeQuestion=(rl,text)=>{//nunca rechaza nada, no protege, solo crea la promesa
+  return new Sequelize.Promise((resolve,reject)=>{
     rl.question(colorize(text,'red'),myanswer=>{
-      resolve(myanswer.trim().toLowerCase());
+      resolve(myanswer);//no la voy a trimmear aqui
     });
   });
 };
@@ -120,50 +120,32 @@ const makeQuestion=(rl,text)=>{
  *
  * @param rl Objeto readline usado para implementar el CLI.
  */
-exports.addCmd = rl => {
-makeQuestion(rl,'Introduzca una pregunta')
-.then(q=>{
-  return makeQuestion(rl,'Introduzca respuesta')
-  .then(a=>{
-    return{question:q,answer:a};
-  });
-})
-.then(quiz=>{
-  return models.quiz.create(quiz);
-})
-.then(quiz=>{
-  log(`${colorize('se ha añadido','magenta')} : ${quiz.question} ${colorize('=>','magenta')} ${quiz.answer}  `);
-})
-.catch(Sequelize.ValidationError,error=>{
-  errorlog('el quiz es erroneo:');
-  error.errors.forEach(({message})=>errorlog(message));
-})
-.catch(error=>{
-  errorlog(error.message);
-})
-.then(()=>{
+
+ exports.addCmd = rl => {
+   makeQuestion(rl,'Introduzca una pregunta: ')
+   .then(q=>{
+     return makeQuestion(rl,'Introduzca respuesta: ') //como incluye un then dentro de un then hay que poner un return
+      .then(a=>{return{question:q,answer:a};});
+ })
+   .then(quiz=>{return models.quiz.create(quiz);})
+   .then(quiz=>{log(`${colorize('se ha añadido','magenta')} : ${quiz.question} ${colorize('=>','magenta')} ${quiz.answer}  `);})
+   .catch(Sequelize.ValidationError,error=>{errorlog('el quiz es erroneo:');error.errors.forEach(({message})=>errorlog(message));})
+   .catch(error=>{errorlog(error.message);})
+   .then(()=>{rl.prompt();});
+ };
+
+ /*
+ //ESTAMIERDAFUNCIONA
+exports.addCmd = async(rl) =>{
+  try{
+  const qpromise = await makeQuestion(rl, 'Introduzca una pregunta: ');
+  const anspromise = await makeQuestion(rl,'Introduzca una respuesta: ');
+  const quiznuevo = {question:qpromise,answer:anspromise};
+  const cre = await models.quiz.create(quiznuevo);
+  log(`${colorize('se ha añadido','magenta')} : ${quiznuevo.question} ${colorize('=>','magenta')} ${quiznuevo.answer}  `);
+}catch(error){errorlog(error.message);}
   rl.prompt();
-});
 };
-/*
-//intenta esto luego
-exports.addCmd = sync(rl) => {
-try{
-const q = await makeQuestion(rl,"Introduzca pregunta");
-const a = await makeQuestion(rl,"introduzca respuesta");
-await models.quiz.create({question:q, answer:a});
-log(`${colorize('se ha añadido','magenta')}`:
-${quiz.question} ${colorize('=>','magenta')}
-${quiz.answer});
-});
-
-}catch(Sequelize.ValidationError,error=>{
-  errorlog('el quiz es erroneo:');
-  error.errors.forEach(({message})=>errorlog(message));
-})
-
-};
-
 */
 
 /**
