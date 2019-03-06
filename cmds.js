@@ -33,19 +33,25 @@ exports.helpCmd = rl => {
  *
  * @param rl Objeto readline usado para implementar el CLI.
  */
+
 exports.listCmd = rl => {
-  models.quiz.findAll()
-  .each(quiz => {log(`Falta el parámetro id.`);})
-  .catch(error => {errorlog(error.message);})
-  .then(()=>{rl.prompt();})
+    models.quiz.findAll()
+    .each(quiz => {
+        log(` [${colorize(quiz.id, 'magenta')}]:  ${quiz.question}`);
+    })
+    .catch(error=>{errorlog(error.message);})
+    .then(()=>  {rl.prompt();
+    });
+
 };
+
+//intenta esto luego FUNCIONA
 /*
-//intenta esto luego
-exports.listCmd = sync(rl) => {
+exports.listCmd = async(rl) => {
 try{
 const quizzes = await models.quiz.findAll();
-quizzes.forEach(quiz=>{log(`falta id`);});
-}catch(error=>{errorlog(error.message);});
+quizzes.forEach(quiz=>{  log(` [${colorize(quiz.id, 'magenta')}]:  ${quiz.question}`);});
+}catch(  error  ){errorlog(error.message);}
   rl.prompt();
 };
 */
