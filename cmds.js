@@ -57,7 +57,7 @@ quizzes.forEach(quiz=>{  log(` [${colorize(quiz.id, 'magenta')}]:  ${quiz.questi
 */
 
 const validateId=id=>{
-  return new SequelizePromise((resolve,reject) => {
+  return new Sequelize.Promise((resolve,reject) => {
     if (typeof id === "undefined"){
       reject(new Error(`Falta el parametro ${id}.`));
     }else{
@@ -77,15 +77,28 @@ const validateId=id=>{
  * @param id Clave del quiz a mostrar.
  */
 exports.showCmd = (rl, id) => {
-  validateId(id)//es una promesa que devuelve un INTEGER
-  .then(id => models.quiz.findById(id))//me devuelve el quiz que busco
+  validateId(id)
+  .then(id=>models.quiz.findById(id))
   .then(quiz=>{
-    if(!quiz){throw new Error(`No hay quiz ${id}`);}
-    log(` [${colorize(id, 'magenta')}]:  ${quiz.question} ${colorize('=>', 'magenta')} ${quiz.answer}`);
-  })
-  .catch(error => {errorlog(error.message);})
+    if(!quiz){throw new Error(`No hay ningun quiz con id = ${id}.`);}
+    log(` [${colorize(id, 'magenta')}]:  ${quiz.question} ${colorize('=>', 'magenta')} ${quiz.answer}`);})
+  .catch((error)=>{errorlog(error.message);})
   .then(()=>{rl.prompt();});
 };
+
+//prueba esto FUNCIONA
+/*
+exports.showCmd = async(rl,id)=>{
+  try{
+  const valipromise = await validateId(id);
+  const quiz = await models.quiz.findById(id);
+  if (!quiz){throw new Error(`No hay ningun quiz con id = ${id}.`);}
+  log(` [${colorize(id, 'magenta')}]:  ${quiz.question} ${colorize('=>', 'magenta')} ${quiz.answer}`);
+
+}catch(error){errorlog(error.message);}
+rl.prompt();
+};
+*/
 
 
 //auxiliar para hacer rl.question
