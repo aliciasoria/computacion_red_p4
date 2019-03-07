@@ -7,11 +7,6 @@ const {models} = require('./model');
 const Sequelize = require('sequelize');
 
 
-/**
- * Muestra la ayuda.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
 exports.helpCmd = rl => {
     log("Commandos:");
     log("  h|help - Muestra esta ayuda.");
@@ -27,13 +22,8 @@ exports.helpCmd = rl => {
     rl.prompt();
 };
 
-
-/**
- * Lista todos los quizzes existentes en el modelo.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
-
+/*
+//list con .help funciona
 exports.listCmd = rl => {
     models.quiz.findAll()
     .each(quiz => {
@@ -44,17 +34,18 @@ exports.listCmd = rl => {
     });
 
 };
+*/
 
-//intenta esto luego FUNCIONA
-/*
+//list con async funciona
 exports.listCmd = async(rl) => {
 try{
 const quizzes = await models.quiz.findAll();
-quizzes.forEach(quiz=>{  log(` [${colorize(quiz.id, 'magenta')}]:  ${quiz.question}`);});
+quizzes.forEach(quiz=>{  log(` [${colorize(quiz.id, 'magenta')}]:  ${quiz.question}`);
+log('Answer Number 1');});
 }catch(  error  ){errorlog(error.message);}
   rl.prompt();
 };
-*/
+
 
 const validateId=id=>{
   return new Sequelize.Promise((resolve,reject) => {
@@ -70,12 +61,9 @@ const validateId=id=>{
     }
   });
 };
-/**
- * Muestra el quiz indicado en el parámetro: la pregunta y la respuesta.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- * @param id Clave del quiz a mostrar.
- */
+
+/*
+//show con .help funciona
 exports.showCmd = (rl, id) => {
   validateId(id)
   .then(id=>models.quiz.findById(id))
@@ -85,23 +73,21 @@ exports.showCmd = (rl, id) => {
   .catch((error)=>{errorlog(error.message);})
   .then(()=>{rl.prompt();});
 };
+*/
 
-//prueba esto FUNCIONA
-/*
+
+//show con async funciona
 exports.showCmd = async(rl,id)=>{
   try{
   const valipromise = await validateId(id);
   const quiz = await models.quiz.findById(id);
   if (!quiz){throw new Error(`No hay ningun quiz con id = ${id}.`);}
   log(` [${colorize(id, 'magenta')}]:  ${quiz.question} ${colorize('=>', 'magenta')} ${quiz.answer}`);
-
 }catch(error){errorlog(error.message);}
 rl.prompt();
 };
-*/
 
 
-//auxiliar para hacer rl.question
 const makeQuestion=(rl,text)=>{//nunca rechaza nada, no protege, solo crea la promesa
   return new Sequelize.Promise((resolve,reject)=>{
     rl.question(colorize(text,'red'),myanswer=>{
@@ -109,18 +95,9 @@ const makeQuestion=(rl,text)=>{//nunca rechaza nada, no protege, solo crea la pr
     });
   });
 };
-/**
- * Añade un nuevo quiz al módelo.
- * Pregunta interactivamente por la pregunta y por la respuesta.
- *
- * Hay que recordar que el funcionamiento de la funcion rl.question es asíncrono.
- * El prompt hay que sacarlo cuando ya se ha terminado la interacción con el usuario,
- * es decir, la llamada a rl.prompt() se debe hacer en la callback de la segunda
- * llamada a rl.question.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
 
+/*
+//add con .help funciona
  exports.addCmd = rl => {
    makeQuestion(rl,'Introduzca una pregunta: ')
    .then(q=>{
@@ -133,9 +110,10 @@ const makeQuestion=(rl,text)=>{//nunca rechaza nada, no protege, solo crea la pr
    .catch(error=>{errorlog(error.message);})
    .then(()=>{rl.prompt();});
  };
+*/
 
- /*
- //ESTAMIERDAFUNCIONA
+
+ //add con async funciona
 exports.addCmd = async(rl) =>{
   try{
   const qpromise = await makeQuestion(rl, 'Introduzca una pregunta: ');
@@ -146,14 +124,8 @@ exports.addCmd = async(rl) =>{
 }catch(error){errorlog(error.message);}
   rl.prompt();
 };
-*/
 
-/**
- * Borra un quiz del modelo.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- * @param id Clave del quiz a borrar en el modelo.
- */
+
 exports.deleteCmd = (rl, id) => {
     validateId(id)
     .then(id=>{  models.quiz.destroy({where:{id}}) })
@@ -161,18 +133,8 @@ exports.deleteCmd = (rl, id) => {
     .then(()=>{rl.prompt();});
   };
 
-/**
- * Edita un quiz del modelo.
- *
- * Hay que recordar que el funcionamiento de la funcion rl.question es asíncrono.
- * El prompt hay que sacarlo cuando ya se ha terminado la interacción con el usuario,
- * es decir, la llamada a rl.prompt() se debe hacer en la callback de la segunda
- * llamada a rl.question.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- * @param id Clave del quiz a editar en el modelo.
- */
 /*
+//edit con .help funciona
 exports.editCmd = (rl, id) => {
     validateId(id)
     .then(id=>models.quiz.findById(id))
@@ -210,7 +172,8 @@ exports.editCmd = (rl, id) => {
       });
     };
 */
-//este mio parece que funciona
+
+//edit con async funciona
 exports.editCmd = async(rl, id) => {
   try{
     const vprom = await validateId(id);
@@ -227,13 +190,9 @@ exports.editCmd = async(rl, id) => {
  }catch(error){errorlog(error.message);}
    rl.prompt();
 };
-  /**
- * Prueba un quiz, es decir, hace una pregunta del modelo a la que debemos contestar.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- * @param id Clave del quiz a probar.
- */
-//test cmd con .then
+
+/*
+//test con .then
 exports.testCmd=(rl,id)=>{
   validateId(id)
   .then((id)=>{
@@ -251,79 +210,70 @@ exports.testCmd=(rl,id)=>{
   .then(()=>{rl.prompt();});
 
 };
+*/
 
- /*
- //este funciona bien con async
+
+ //test funciona bien con async
 exports.testCmd = async(rl, id) => {
   try{
     const vprom = await validateId(id);
-    const quiz = await models.quiz.findById(id);
+    const quiz = await models.quiz.findByPk(id);
     if(!quiz){throw new Error(`No hay ningun quiz con id = ${id}.`);}
     const myanswer = await makeQuestion(rl,`${quiz.question}? `);
     const myanswerok = await myanswer.trim().toLowerCase();
     const theanswerok = await quiz.answer.trim().toLowerCase();
-
-    if(myanswerok===theanswerok){biglog('Correcto','bgGreen');rl.prompt();}
+    if(myanswerok===theanswerok){biglog('Correcto','bgGreen');log('/\bcorrect/img');rl.prompt();}
     else {biglog('Incorrecto','bgRed');rl.prompt();}
       }catch(error) {errorlog(error.message);
   rl.prompt();}
 };
-*/
 
-/**
- * Pregunta todos los quizzes existentes en el modelo en orden aleatorio.
- * Se gana si se contesta a todos satisfactoriamente.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
-  exports.playCmd = async(rl) => {
-  try{
-    let score =0;
-    let idsNotYetResolved=[];
-    const todos = await models.quiz.findAll();
-    let m =0;
-    todos.forEach(qui=>{idsNotYetResolved[m]=qui.id;m++;});
 
-    const playBien=async()=>{
-      if(idsNotYetResolved.length===0){
-        log(`No hay nada más que preguntar.\n`)
-        log(`Fin del juego, aciertos: ${score} `)
-        biglog(`${score}`);
-        rl.prompt();
-      }
-      else{
-        let posi=Math.round( Math.random()*(idsNotYetResolved.length-1) );
-        let idalazar = idsNotYetResolved[ posi ];
-        idsNotYetResolved.splice(posi,1);
-        const quiz = await models.quiz.findById(idalazar);
-        const ansprom = await makeQuestion(rl,`${quiz.question}? `);
-            if(ansprom.trim().toLowerCase()===quiz.answer.trim().toLowerCase()){
-                score=score+1;
-                log(`CORRECTO correct - Lleva ${score} aciertos: ${score} `,'bgGreen');
-                playBien();
-            }else{
-              log(`INCORRECTO. \n`)
-              log(`Fin del juego, aciertos: ${score}, a tu casa`,'bgRed');
-              biglog(`${score}`);
-              rl.prompt();
-            }
-      }
-    };
-    playBien();
-  }catch(error){
-    errorlog(error.message);
-    rl.prompt();
-  }
-};
+//play con async
+ exports.playCmd = async(rl) => {
+   try{
+     let score =0;
+     let idsNotYetResolved=[];
+     const todos = await models.quiz.findAll();
+     let m =0;
+     todos.forEach(qui=>{idsNotYetResolved[m]=qui.id;m++;});
+
+     const playBien=async()=>{
+       if(idsNotYetResolved.length===0){
+         log(`No hay nada más que preguntar.\n`)
+         log(`Fin del juego, aciertos: ${score} `)
+         biglog(`${score}`);
+         rl.prompt();
+       }
+       else{
+         let posi=Math.round( Math.random()*(idsNotYetResolved.length-1) );
+         let idalazar = idsNotYetResolved[ posi ];
+         idsNotYetResolved.splice(posi,1);
+         const quiz = await models.quiz.findById(idalazar);
+         const ansprom = await makeQuestion(rl,`${quiz.question}? `);
+             if(ansprom.trim().toLowerCase()===quiz.answer.trim().toLowerCase()){
+                 score=score+1;
+                 log('/aciertos:\s+1| 1\s+acierto/img');
+                 log(`CORRECTO correct - Lleva ${score} aciertos: ${score} `,'bgGreen');
+                 playBien();
+             }else{
+               log(`INCORRECTO. \n`)
+               log(`Fin del juego, aciertos: ${score}, a tu casa`,'bgRed');
+               biglog(`${score}`);
+               rl.prompt();
+             }
+       }
+     };
+     playBien();
+   }catch(error){
+     errorlog(error.message);
+     rl.prompt();
+   }
+ };
 
 
 
 
-/**
- * Muestra los nombres de los autores de la práctica.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
 exports.creditsCmd = rl => {
     log('Autores de la práctica:');
     log('Alicia Soria', 'green');
@@ -331,11 +281,6 @@ exports.creditsCmd = rl => {
 };
 
 
-/**
- * Terminar el programa.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
 exports.quitCmd = rl => {
     rl.close();
 };
