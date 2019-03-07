@@ -11,7 +11,7 @@ sequelize.define('quiz',
   validate:{notEmpty:{msg: "La pregunta no puede estar vacia"}}},
 answer:
   {type: Sequelize.STRING,
-  validate: {notEmpty:{msg: "La pregunta no puede estar vacia"}}}
+  validate: {notEmpty:{msg: "La respuesta no puede estar vacia"}}}
 });
 
 // 2 INICIALIZACION
