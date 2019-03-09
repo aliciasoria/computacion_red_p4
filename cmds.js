@@ -41,7 +41,7 @@ exports.listCmd = async(rl) => {
 try{
 const quizzes = await models.quiz.findAll();
 quizzes.forEach(quiz=>{  log(` [${colorize(quiz.id, 'magenta')}]:  ${quiz.question}`);
-log('Answer Number 1');});
+});
 }catch(  error  ){errorlog(error.message);}
   rl.prompt();
 };
