@@ -158,7 +158,7 @@ exports.editCmd = (rl, id) => {
         return quiz.save();
       })
       .then(quiz=>{
-        log(`Se ha cambiado el quiz ${colorize(quiz.id,'magetna')} por: ${quiz.question} ${colorize('=>','magenta')} ${quiz.answer}`);
+        log(`Se ha cambiado el quiz ${colorize(quiz.id,'magenta')} por: ${quiz.question} ${colorize('=>','magenta')} ${quiz.answer}`);
       })
       .catch(Sequelize.ValidationError,error=>{
         errorlog('El quiz es erroneo');
